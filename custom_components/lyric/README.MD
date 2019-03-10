@@ -6,7 +6,7 @@ https://github.com/bramkragten/
 https://community.home-assistant.io/t/honeywell-lyric-thermostat/
 
 # Steps to perform 
-Here is a summary of the installation steps for those who follow. If you find any errors, please send me a message and I will amend the text. Originally [summarized](https://community.home-assistant.io/t/honeywell-lyric-thermostat/3520/487?u=teunehv) by [rwpalmer](https://community.home-assistant.io/u/rwpalmer), edited by [teunvh](https://community.home-assistant.io/u/teunehv).
+Here is a summary of the installation steps for those who follow. If you find any errors, please send me a message and I will amend the text. Originally [summarized](https://community.home-assistant.io/t/honeywell-lyric-thermostat/3520/487) by [rwpalmer](https://community.home-assistant.io/u/rwpalmer), edited by [teunvh](https://community.home-assistant.io/u/teunehv).
 
 ### Part 1: Obtain client key & secret from Honeywell
 1. Visit [Honeywell Developers](http://developer.honeywell.com/), and sign in. Create an account if you don’t have one already.
