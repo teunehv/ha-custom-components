@@ -18,10 +18,10 @@ from homeassistant.components.climate import (
 ClimateDevice, PLATFORM_SCHEMA
 )
 from homeassistant.components.climate.const import (
-    ATTR_TARGET_TEMP_HIGH, ATTR_TARGET_TEMP_LOW, DOMAIN, STATE_AUTO,
-    STATE_COOL, STATE_HEAT, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_TARGET_TEMPERATURE_HIGH, SUPPORT_TARGET_TEMPERATURE_LOW,
-    SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_FAN_MODE)
+    ATTR_TARGET_TEMP_HIGH, ATTR_TARGET_TEMP_LOW, DOMAIN, HVAC_MODE_AUTO,
+    HVAC_MODE_COOL, HVAC_MODE_HEAT, SUPPORT_TARGET_TEMPERATURE,
+    SUPPORT_TARGET_TEMPERATURE_RANGE, HVAC_MODE_HEAT_COOL, HVAC_MODE_OFF,
+    SUPPORT_FAN_MODE)
 from homeassistant.const import (
     ATTR_ENTITY_ID, ATTR_TEMPERATURE, CONF_SCAN_INTERVAL,
     STATE_ON, STATE_OFF, STATE_UNKNOWN, TEMP_CELSIUS,
@@ -35,9 +35,8 @@ SERVICE_RESET_AWAY = 'lyric_reset_away'
 STATE_HEAT_COOL = 'heat-cool'
 HOLD_NO_HOLD = 'NoHold'
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_TARGET_TEMPERATURE_HIGH |
-                 SUPPORT_TARGET_TEMPERATURE_LOW | SUPPORT_OPERATION_MODE |
-                 SUPPORT_AWAY_MODE | SUPPORT_FAN_MODE)
+SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_TARGET_TEMPERATURE_RANGE |
+                 SUPPORT_FAN_MODE)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_SCAN_INTERVAL):
@@ -103,17 +102,17 @@ class LyricThermostat(ClimateDevice):
         _LOGGER.debug("away periods: %s" % away_periods)
 
         # Not all lyric devices support cooling and heating remove unused
-        self._operation_list = [STATE_OFF]
+        self._operation_list = [HVAC_MODE_OFF]
 
         # Add supported lyric thermostat features
         if self.device.can_heat:
-            self._operation_list.append(STATE_HEAT)
+            self._operation_list.append(HVAC_MODE_HEAT)
 
         if self.device.can_cool:
-            self._operation_list.append(STATE_COOL)
+            self._operation_list.append(HVAC_MODE_COOL)
 
         if self.device.can_heat and self.device.can_cool:
-            self._operation_list.append(STATE_AUTO)
+            self._operation_list.append(HVAC_MODE_HEAT_COOL)
 
         # feature of device
         self._has_fan = has_fan
@@ -170,10 +169,10 @@ class LyricThermostat(ClimateDevice):
     @property
     def current_operation(self):
         """Return current operation ie. heat, cool, idle."""
-        if self._mode in [STATE_HEAT, STATE_COOL, STATE_OFF]:
+        if self._mode in [HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_OFF]:
             return self._mode
-        elif self._mode == STATE_HEAT_COOL:
-            return STATE_AUTO
+        elif self._mode == HVAC_MODE_HEAT_COOL:
+            return HVAC_MODE_AUTO
         else:
             return STATE_UNKNOWN
 
@@ -223,21 +222,33 @@ class LyricThermostat(ClimateDevice):
         _LOGGER.debug("Lyric set_temperature-output-value=%s", temp)
         self.device.temperatureSetpoint = temp
 
-    def set_operation_mode(self, operation_mode):
+    def set_hvac_mode(self, hvac_mode: str):
         """Set operation mode."""
-        _LOGGER.debug(operation_mode)
-        _LOGGER.debug(operation_mode.capitalize())
+        _LOGGER.debug(hvac_mode)
+        _LOGGER.debug(hvac_mode.capitalize())
 
-        if operation_mode in [STATE_HEAT, STATE_COOL, STATE_OFF]:
-            device_mode = operation_mode
-        elif operation_mode == STATE_AUTO:
-            device_mode = STATE_HEAT_COOL
+        if hvac_mode in [HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_OFF]:
+            device_mode = hvac_mode
+        elif hvac_mode == HVAC_MODE_AUTO:
+            device_mode = HVAC_MODE_HEAT_COOL
         self.device.operationMode = device_mode.capitalize()
 
     @property
     def operation_list(self):
         """List of available operation modes."""
         return self._operation_list
+
+    @property
+    def hvac_mode(self):
+        """Return current HVAC mode."""
+        return self.current_operation
+
+    @property
+    def hvac_modes(self):
+        """Return available HVAC modes."""
+        return self.operation_list
+
+
 
     def turn_away_mode_on(self):
         """Turn away on."""
@@ -265,7 +276,7 @@ class LyricThermostat(ClimateDevice):
         self.device.thermostatSetpointStatus = hold_mode
 
     @property
-    def current_fan_mode(self):
+    def fan_mode(self):
         """Return whether the fan is on."""
         if self._has_fan:
             # Return whether the fan is on
@@ -275,7 +286,7 @@ class LyricThermostat(ClimateDevice):
             return None
 
     @property
-    def fan_list(self):
+    def fan_modes(self):
         """List of available fan modes."""
         return self._fan_list
 
